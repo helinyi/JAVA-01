@@ -20,4 +20,11 @@ reference：
 
 1. https://shimo.im/docs/rcxYt6PtQgkkyd8h
 2. https://shimo.im/docs/gktGqQk8QGGP8gqR/read
+3. [HotSpot虚拟机运行时系统](https://github.com/cncounter/translation/blob/master/tiemao_2019/15_HotSpot _Runtime_Overview/README.md)
+4. [Why Should I Know About Java Bytecode](https://jrebel.com/rebellabs/rebel­labs­report­mastering­java­bytecode­at­the­core­of­the­jvm/)
+5. [轻松看懂Java字节码](https://juejin.im/post/5aca2c366fb9a028c97a5609)
+6. [invokedynamic指令](https://www.cnblogs.com/wade­luffy/p/6058087.html)
+7. [Java 8的Lambda表达式为什么要基于 invokedynamic?](https://www.zhihu.com/question/39462935)
+8. [Invokedynamic](https://www.jianshu.com/p/ad7d572196a8)
+9. [JVM之动态方法调用:invokedynamic](https://ifeve.com/jvm%E4%B9%8B%E5%8A%A8%E6%80%81%E6%96%B9% E6%B3%95%E8%B0%83%E7%94%A8%EF%BC%9Ainvokedynamic/)
 
