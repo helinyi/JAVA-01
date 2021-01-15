@@ -1,10 +1,17 @@
-Xmx、Xms、Xmn、Metaspache、DirectMemory、Xss图：
+### READ THIS!!!!!!
+
+1. memory graph -> see below in README.md
+2. xlass implementation -> see maven project under current directory
+3. 观察JVM -> see gc.md in current directory
+
+
+### Xmx、Xms、Xmn、Metaspache、DirectMemory、Xss图：
 
 ![jvm memory parameters](images/jvm_memory_parameters.png)
 
 
 
-学习笔记：
+### 学习笔记
 
 1. 字节码分析关键是对照着 https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html 来一步一步，文档里面的Operand Stack很有用，一个字节码会发生什么一目了然
 2. 字节码跟AOP、类的动态加载卸载关系很大
@@ -16,7 +23,7 @@ Xmx、Xms、Xmn、Metaspache、DirectMemory、Xss图：
 
 
 
-reference：
+### Reference
 
 1. https://shimo.im/docs/rcxYt6PtQgkkyd8h
 2. https://shimo.im/docs/gktGqQk8QGGP8gqR/read
