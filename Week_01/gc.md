@@ -183,6 +183,7 @@ java -XX:+UseParallelGC -XX:+UseParallelOldGC com.mypackages.MyExecutableClass
 
 wrk -t6 -d300s http://localhost:8088/api/hello
 
+<pre>
 Running 5m test @ http://localhost:8088/api/hello
 6 threads and 10 connections
  Thread Stats  Avg   Stdev   Max  +/- Stdev
@@ -192,6 +193,7 @@ Running 5m test @ http://localhost:8088/api/hello
  Socket errors: connect 0, read 0, write 0, timeout 23
 Requests/sec: 34026.45
 Transfer/sec:   4.06MB
+</pre>
 
 jconsole:
 
