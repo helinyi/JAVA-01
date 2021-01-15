@@ -51,19 +51,19 @@ Transfer/sec:      3.64MB
 
 jconsole:
 
-![image-20210114171944551](/Users/frank/Library/Application Support/typora-user-images/image-20210114171944551.png)
+![image-20210114171944551](images/image-20210114171944551.png)
 
-![image-20210114171959275](/Users/frank/Library/Application Support/typora-user-images/image-20210114171959275.png)
+![image-20210114171959275](images/image-20210114171959275.png)
 
 以下可以看到上面显示的堆内存使用波动大都发生在eden space，因为绝大部分的压测连接都是短时间的
 
-![image-20210114172036715](/Users/frank/Library/Application Support/typora-user-images/image-20210114172036715.png)
+![image-20210114172036715](images/image-20210114172036715.png)
 
-![image-20210114172115030](/Users/frank/Library/Application Support/typora-user-images/image-20210114172115030.png)
+![image-20210114172115030](images/image-20210114172115030.png)
 
 老年区也有在稳步上升
 
-![image-20210114172207324](/Users/frank/Library/Application Support/typora-user-images/image-20210114172207324.png)
+![image-20210114172207324](images/image-20210114172207324.png)
 
 jmap:
 
@@ -195,15 +195,17 @@ Transfer/sec:   4.06MB
 
 jconsole:
 
-![image-20210114173922278](/Users/frank/Library/Application Support/typora-user-images/image-20210114173922278.png)
+![image-20210114173922278](images/image-20210114173922278.png)
 
-![image-20210114173928695](/Users/frank/Library/Application Support/typora-user-images/image-20210114173928695.png)
+![image-20210114173928695](images/image-20210114173928695.png)
 
-![image-20210114173951847](/Users/frank/Library/Application Support/typora-user-images/image-20210114173951847.png)![image-20210114174004929](/Users/frank/Library/Application Support/typora-user-images/image-20210114174004929.png)
+![image-20210114173951847](images/image-20210114173951847.png)
 
-![image-20210114174017761](/Users/frank/Library/Application Support/typora-user-images/image-20210114174017761.png)
+![image-20210114174004929](images/image-20210114174004929.png)
 
-![image-20210114174206761](/Users/frank/Library/Application Support/typora-user-images/image-20210114174206761.png)
+![image-20210114174017761](images/image-20210114174017761.png)
+
+![image-20210114174206761](images/image-20210114174206761.png)
 
 jstat：
 
@@ -291,27 +293,27 @@ Launcher Type: SUN_STANDARD
 
 JMC:
 
-![image-20210114182319750](/Users/frank/Library/Application Support/typora-user-images/image-20210114182319750.png)
+![image-20210114182319750](images/image-20210114182319750.png)
 
 
 
 JMC flight recorder:
 
-![image-20210114183215916](/Users/frank/Library/Application Support/typora-user-images/image-20210114183215916.png)
+![image-20210114183215916](images/image-20210114183215916.png)
 
-![image-20210114183257011](/Users/frank/Library/Application Support/typora-user-images/image-20210114183257011.png)
+![image-20210114183257011](images/image-20210114183257011.png)
 
-![image-20210114183317068](/Users/frank/Library/Application Support/typora-user-images/image-20210114183317068.png)
+![image-20210114183317068](images/image-20210114183317068.png)
 
 可以看到每次GC的时间跟原因，JMC flight recorder牛逼。可以看到每次pause的时间都在1-2ms之间徘徊
 
 按照这个[stackoverflow](https://stackoverflow.com/questions/28342736/java-gc-allocation-failure)，"Allocation Failure" is a cause of GC cycle to kick in。Allocation Failure" means that no more space left in Eden to allocate object. So, it is normal cause of young GC. 意思是压测太猛了，Eden区分配对象没分配过来，就要gc清点空间。按照这个思路去优化的话，应该是提高eden space的空间，就能减少gc，对应于上节课讲的，就是**调-Xmn 跟 -XX:MaxNewSize到更大**，前提是-Xmx先增大
 
-![image-20210114183405815](/Users/frank/Library/Application Support/typora-user-images/image-20210114183405815.png)
+![image-20210114183405815](images/image-20210114183405815.png)
 
 这里可以看到很明显地分出了young garbage collector 跟 old garbage collector，比jconsole更加直白；GC time ratio 是99（By default, the value of **-XX:GCTimeRatio** flag is set to 99 by the JVM, which means that the application will get 99 times more  working time compared to the garbage collection which is a good  trade-off for the server-side applications.），**这个应该可以较少一点**，因为我们的gc次数还是比较多的，我们的程序逻辑只是回个helloworld；New ratio是2，就是说年轻代：老年代=2，在我们这个简单的wrk压测用例下，**这个应该可以调更大**，5/6/7/8应该都可以；
 
-![image-20210114184134313](/Users/frank/Library/Application Support/typora-user-images/image-20210114184134313.png)
+![image-20210114184134313](images/image-20210114184134313.png)
 
 
 
@@ -381,9 +383,9 @@ Launcher Type: SUN_STANDARD
 
 JMC flight recorder:
 
-![image-20210114185843100](/Users/frank/Library/Application Support/typora-user-images/image-20210114185843100.png)
+![image-20210114185843100](images/image-20210114185843100.png)
 
-![image-20210114185921002](/Users/frank/Library/Application Support/typora-user-images/image-20210114185921002.png)
+![image-20210114185921002](images/image-20210114185921002.png)
 
 **可以看到虽然G1是软实时的，但总体来说对于每次GC，它的pause要比CMS要更耗时？？**
 
