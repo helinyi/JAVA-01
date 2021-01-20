@@ -1,0 +1,83 @@
+OpenJDK 64-Bit Server VM (25.232-b09) for bsd-amd64 JRE (1.8.0_232-b09), built on Oct 19 2019 07:00:21 by "jenkins" with gcc 4.2.1 (Based on Apple Inc. build 5658) (LLVM build 2336.11.00)
+Memory: 4k page, physical 67108864k(3492308k free)
+
+/proc/meminfo:
+
+CommandLine flags: -XX:InitialHeapSize=536870912 -XX:MaxHeapSize=536870912 -XX:+PrintGC -XX:+PrintGCDateStamps -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+UseCompressedClassPointers -XX:+UseCompressedOops -XX:+UseParallelGC
+2021-01-19T21:27:38.881+0500: 0.167: [GC (Allocation Failure) [PSYoungGen: 131082K->21487K(153088K)] 131082K->43048K(502784K), 0.0158783 secs] [Times: user=0.03 sys=0.13, real=0.01 secs]
+    普通的一次YGC，值得注意的是real 大致等于(user+sys)/ core count，因为parallel
+    此时老年代使用率为(43048-21487)/(502784-153088)=6%
+2021-01-19T21:27:38.917+0500: 0.202: [GC (Allocation Failure) [PSYoungGen: 153071K->21496K(153088K)] 174632K->83150K(502784K), 0.0231588 secs] [Times: user=0.03 sys=0.19, real=0.03 secs]
+2021-01-19T21:27:38.956+0500: 0.242: [GC (Allocation Failure) [PSYoungGen: 153080K->21487K(153088K)] 214734K->126634K(502784K), 0.0181598 secs] [Times: user=0.04 sys=0.14, real=0.02 secs]
+2021-01-19T21:27:38.990+0500: 0.276: [GC (Allocation Failure) [PSYoungGen: 153071K->21501K(153088K)] 258218K->165017K(502784K), 0.0157219 secs] [Times: user=0.04 sys=0.11, real=0.01 secs]
+2021-01-19T21:27:39.022+0500: 0.308: [GC (Allocation Failure) [PSYoungGen: 153085K->21497K(153088K)] 296601K->204882K(502784K), 0.0182864 secs] [Times: user=0.04 sys=0.13, real=0.02 secs]
+2021-01-19T21:27:39.057+0500: 0.342: [GC (Allocation Failure) [PSYoungGen: 153081K->21495K(80384K)] 336466K->242663K(430080K), 0.0171731 secs] [Times: user=0.04 sys=0.13, real=0.02 secs]
+2021-01-19T21:27:39.081+0500: 0.367: [GC (Allocation Failure) [PSYoungGen: 80375K->37037K(116736K)] 301543K->262668K(466432K), 0.0051582 secs] [Times: user=0.05 sys=0.01, real=0.00 secs]
+2021-01-19T21:27:39.095+0500: 0.380: [GC (Allocation Failure) [PSYoungGen: 95917K->48129K(116736K)] 321548K->280500K(466432K), 0.0068736 secs] [Times: user=0.06 sys=0.01, real=0.01 secs]
+2021-01-19T21:27:39.110+0500: 0.396: [GC (Allocation Failure) [PSYoungGen: 107009K->57845K(116736K)] 339380K->300715K(466432K), 0.0099492 secs] [Times: user=0.06 sys=0.04, real=0.01 secs]
+2021-01-19T21:27:39.130+0500: 0.415: [GC (Allocation Failure) [PSYoungGen: 116725K->42281K(116736K)] 359595K->319693K(466432K), 0.0162464 secs] [Times: user=0.04 sys=0.11, real=0.01 secs]
+2021-01-19T21:27:39.155+0500: 0.440: [GC (Allocation Failure) [PSYoungGen: 101091K->18623K(116736K)] 378504K->336938K(466432K), 0.0160491 secs] [Times: user=0.03 sys=0.11, real=0.02 secs]
+    fullgc前的最后一次YGC。YGC过后老年代usage=336938K-18623K=318315，总老年代大小为466432K-116736K=349696,占比为91%
+2021-01-19T21:27:39.171+0500: 0.457: [Full GC (Ergonomics) [PSYoungGen: 18623K->0K(116736K)] [ParOldGen: 318314K->236441K(349696K)] 336938K->236441K(466432K), [Metaspace: 3195K->3195K(1056768K)], 0.0311675 secs] [Times: user=0.29 sys=0.02, real=0.03 secs]
+    紧挨着上一次YGC，使用量达到91%，触发fullgc
+
+    注意这个fullgc不像serialgc那样，PSYoungGen能正确显示young gen归零了
+
+    这个Ergonomics是人体工程学的意思。Ergonomics – Reason for the GC taking place. This indicates that the JVM internal ergonomics decided this is the right time to collect some garbage.
+
+    fullgc完老年代使用率为236441/349696=67%
+
+2021-01-19T21:27:39.214+0500: 0.499: [GC (Allocation Failure) [PSYoungGen: 58880K->21435K(116736K)] 295321K->257877K(466432K), 0.0024399 secs] [Times: user=0.03 sys=0.00, real=0.00 secs]
+2021-01-19T21:27:39.227+0500: 0.512: [GC (Allocation Failure) [PSYoungGen: 80315K->18800K(116736K)] 316757K->275723K(466432K), 0.0041642 secs] [Times: user=0.04 sys=0.00, real=0.01 secs]
+2021-01-19T21:27:39.241+0500: 0.527: [GC (Allocation Failure) [PSYoungGen: 77403K->18661K(116736K)] 334326K->293156K(466432K), 0.0039239 secs] [Times: user=0.04 sys=0.00, real=0.00 secs]
+2021-01-19T21:27:39.256+0500: 0.542: [GC (Allocation Failure) [PSYoungGen: 77541K->21879K(116736K)] 352036K->314342K(466432K), 0.0040769 secs] [Times: user=0.05 sys=0.01, real=0.01 secs]
+2021-01-19T21:27:39.271+0500: 0.557: [GC (Allocation Failure) [PSYoungGen: 80759K->19194K(116736K)] 373222K->332120K(466432K), 0.0041256 secs] [Times: user=0.04 sys=0.00, real=0.00 secs]
+    老年代使用率(332120-19194)/(466432-116736)=89%，触发fullgc
+2021-01-19T21:27:39.275+0500: 0.561: [Full GC (Ergonomics) [PSYoungGen: 19194K->0K(116736K)] [ParOldGen: 312925K->267831K(349696K)] 332120K->267831K(466432K), [Metaspace: 3195K->3195K(1056768K)], 0.0283018 secs] [Times: user=0.28 sys=0.00, real=0.03 secs]
+
+    fullgc完老年代使用率为267831/349696=76%
+
+2021-01-19T21:27:39.317+0500: 0.602: [GC (Allocation Failure) [PSYoungGen: 58238K->17437K(116736K)] 326070K->285269K(466432K), 0.0020994 secs] [Times: user=0.02 sys=0.00, real=0.00 secs]
+2021-01-19T21:27:39.329+0500: 0.615: [GC (Allocation Failure) [PSYoungGen: 75857K->19487K(116736K)] 343689K->303651K(466432K), 0.0036616 secs] [Times: user=0.03 sys=0.00, real=0.01 secs]
+2021-01-19T21:27:39.343+0500: 0.629: [GC (Allocation Failure) [PSYoungGen: 77800K->19737K(116736K)] 361964K->321422K(466432K), 0.0037589 secs] [Times: user=0.04 sys=0.00, real=0.00 secs]
+2021-01-19T21:27:39.356+0500: 0.642: [GC (Allocation Failure) [PSYoungGen: 78441K->20347K(116736K)] 380126K->341190K(466432K), 0.0047115 secs] [Times: user=0.05 sys=0.00, real=0.01 secs]
+2021-01-19T21:27:39.361+0500: 0.647: [Full GC (Ergonomics) [PSYoungGen: 20347K->0K(116736K)] [ParOldGen: 320842K->284836K(349696K)] 341190K->284836K(466432K), [Metaspace: 3195K->3195K(1056768K)], 0.0286056 secs] [Times: user=0.29 sys=0.01, real=0.03 secs]
+
+    fullgc完老年代使用率为284836/349696=81%
+
+2021-01-19T21:27:39.402+0500: 0.687: [GC (Allocation Failure) [PSYoungGen: 58354K->19961K(116736K)] 343190K->304798K(466432K), 0.0023770 secs] [Times: user=0.03 sys=0.00, real=0.00 secs]
+2021-01-19T21:27:39.415+0500: 0.700: [GC (Allocation Failure) [PSYoungGen: 78481K->19710K(116736K)] 363317K->323748K(466432K), 0.0043791 secs] [Times: user=0.04 sys=0.00, real=0.00 secs]
+2021-01-19T21:27:39.429+0500: 0.715: [GC (Allocation Failure) [PSYoungGen: 78463K->24623K(116736K)] 382501K->347167K(466432K), 0.0054391 secs] [Times: user=0.06 sys=0.00, real=0.01 secs]
+2021-01-19T21:27:39.435+0500: 0.721: [Full GC (Ergonomics) [PSYoungGen: 24623K->0K(116736K)] [ParOldGen: 322544K->302197K(349696K)] 347167K->302197K(466432K), [Metaspace: 3195K->3195K(1056768K)], 0.0294000 secs] [Times: user=0.29 sys=0.01, real=0.03 secs]
+
+    fullgc完老年代使用率为302197/349696=86%
+
+2021-01-19T21:27:39.478+0500: 0.763: [GC (Allocation Failure) [PSYoungGen: 58603K->16618K(116736K)] 360800K->318815K(466432K), 0.0026614 secs] [Times: user=0.02 sys=0.00, real=0.01 secs]
+2021-01-19T21:27:39.491+0500: 0.777: [GC (Allocation Failure) [PSYoungGen: 75105K->20090K(116736K)] 377303K->338450K(466432K), 0.0042883 secs] [Times: user=0.04 sys=0.00, real=0.00 secs]
+2021-01-19T21:27:39.495+0500: 0.781: [Full GC (Ergonomics) [PSYoungGen: 20090K->0K(116736K)] [ParOldGen: 318360K->307987K(349696K)] 338450K->307987K(466432K), [Metaspace: 3195K->3195K(1056768K)], 0.0307531 secs] [Times: user=0.31 sys=0.01, real=0.03 secs]
+
+    fullgc完老年代使用率为307987/349696=88%
+
+2021-01-19T21:27:39.538+0500: 0.824: [GC (Allocation Failure) [PSYoungGen: 58880K->22279K(116736K)] 366867K->330267K(466432K), 0.0025113 secs] [Times: user=0.02 sys=0.00, real=0.01 secs]
+2021-01-19T21:27:39.552+0500: 0.837: [GC (Allocation Failure) [PSYoungGen: 81159K->20976K(116736K)] 389147K->349495K(466432K), 0.0070767 secs] [Times: user=0.05 sys=0.02, real=0.00 secs]
+2021-01-19T21:27:39.559+0500: 0.844: [Full GC (Ergonomics) [PSYoungGen: 20976K->0K(116736K)] [ParOldGen: 328518K->322166K(349696K)] 349495K->322166K(466432K), [Metaspace: 3195K->3195K(1056768K)], 0.0308295 secs] [Times: user=0.31 sys=0.01, real=0.04 secs]
+
+    fullgc完老年代使用率为322166/349696=92%。此时老年代已经不堪重负了，只能不断fullgc
+
+2021-01-19T21:27:39.601+0500: 0.886: [Full GC (Ergonomics) [PSYoungGen: 58810K->0K(116736K)] [ParOldGen: 322166K->323721K(349696K)] 380977K->323721K(466432K), [Metaspace: 3195K->3195K(1056768K)], 0.0329278 secs] [Times: user=0.33 sys=0.00, real=0.03 secs]
+2021-01-19T21:27:39.645+0500: 0.930: [Full GC (Ergonomics) [PSYoungGen: 58816K->0K(116736K)] [ParOldGen: 323721K->329139K(349696K)] 382538K->329139K(466432K), [Metaspace: 3195K->3195K(1056768K)], 0.0329087 secs] [Times: user=0.36 sys=0.01, real=0.03 secs]
+2021-01-19T21:27:39.689+0500: 0.974: [Full GC (Ergonomics) [PSYoungGen: 58722K->0K(116736K)] [ParOldGen: 329139K->332066K(349696K)] 387861K->332066K(466432K), [Metaspace: 3195K->3195K(1056768K)], 0.0328458 secs] [Times: user=0.34 sys=0.01, real=0.04 secs]
+2021-01-19T21:27:39.734+0500: 1.020: [Full GC (Ergonomics) [PSYoungGen: 58880K->0K(116736K)] [ParOldGen: 332066K->336597K(349696K)] 390946K->336597K(466432K), [Metaspace: 3195K->3195K(1056768K)], 0.0332927 secs] [Times: user=0.34 sys=0.02, real=0.03 secs]
+2021-01-19T21:27:39.779+0500: 1.064: [Full GC (Ergonomics) [PSYoungGen: 58821K->0K(116736K)] [ParOldGen: 336597K->338099K(349696K)] 395419K->338099K(466432K), [Metaspace: 3195K->3195K(1056768K)], 0.0331688 secs] [Times: user=0.35 sys=0.00, real=0.04 secs]
+
+    来到最后老年代使用率达到：338099/349696=96%
+
+Heap
+ PSYoungGen      total 116736K, used 2716K [0x00000007b5580000, 0x00000007c0000000, 0x00000007c0000000)
+  eden space 58880K, 4% used [0x00000007b5580000,0x00000007b5827200,0x00000007b8f00000)
+  from space 57856K, 0% used [0x00000007b8f00000,0x00000007b8f00000,0x00000007bc780000)
+  to   space 56832K, 0% used [0x00000007bc880000,0x00000007bc880000,0x00000007c0000000)
+ ParOldGen       total 349696K, used 338099K [0x00000007a0000000, 0x00000007b5580000, 0x00000007b5580000)
+  object space 349696K, 96% used [0x00000007a0000000,0x00000007b4a2cde8,0x00000007b5580000)
+ Metaspace       used 3201K, capacity 4500K, committed 4864K, reserved 1056768K
+  class space    used 343K, capacity 388K, committed 512K, reserved 1048576K

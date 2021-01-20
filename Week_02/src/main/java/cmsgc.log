@@ -1,0 +1,201 @@
+OpenJDK 64-Bit Server VM (25.232-b09) for bsd-amd64 JRE (1.8.0_232-b09), built on Oct 19 2019 07:00:21 by "jenkins" with gcc 4.2.1 (Based on Apple Inc. build 5658) (LLVM build 2336.11.00)
+Memory: 4k page, physical 67108864k(2500716k free)
+
+/proc/meminfo:
+
+CommandLine flags: -XX:InitialHeapSize=536870912 -XX:MaxHeapSize=536870912 -XX:MaxNewSize=178958336 -XX:MaxTenuringThreshold=6 -XX:NewSize=178958336 -XX:OldPLABSize=16 -XX:OldSize=357912576 -XX:+PrintGC -XX:+PrintGCDateStamps -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+UseCompressedClassPointers -XX:+UseCompressedOops -XX:+UseConcMarkSweepGC -XX:+UseParNewGC
+2021-01-19T22:04:42.289+0500: 0.173: [GC (Allocation Failure) 2021-01-19T22:04:42.289+0500: 0.173: [ParNew: 139776K->17471K(157248K), 0.0148304 secs] 139776K->42809K(506816K), 0.0149554 secs] [Times: user=0.04 sys=0.11, real=0.02 secs]
+
+    注意这里用的是Parnew算法，是为CMS特别设计的，所以叫做parallel new，而不是原来的parallel scavenge
+
+2021-01-19T22:04:42.324+0500: 0.208: [GC (Allocation Failure) 2021-01-19T22:04:42.324+0500: 0.208: [ParNew: 157247K->17470K(157248K), 0.0189705 secs] 182585K->87507K(506816K), 0.0190471 secs] [Times: user=0.06 sys=0.09, real=0.02 secs]
+2021-01-19T22:04:42.358+0500: 0.242: [GC (Allocation Failure) 2021-01-19T22:04:42.358+0500: 0.242: [ParNew: 156648K->17471K(157248K), 0.0366427 secs] 226685K->135653K(506816K), 0.0367086 secs] [Times: user=0.42 sys=0.02, real=0.04 secs]
+2021-01-19T22:04:42.415+0500: 0.299: [GC (Allocation Failure) 2021-01-19T22:04:42.415+0500: 0.299: [ParNew: 157247K->17470K(157248K), 0.0312032 secs] 275429K->185735K(506816K), 0.0312860 secs] [Times: user=0.37 sys=0.02, real=0.03 secs]
+2021-01-19T22:04:42.463+0500: 0.347: [GC (Allocation Failure) 2021-01-19T22:04:42.463+0500: 0.347: [ParNew: 157246K->17471K(157248K), 0.0242125 secs] 325511K->227834K(506816K), 0.0243675 secs] [Times: user=0.28 sys=0.01, real=0.02 secs]
+
+    此次ygc后老年代使用率为(227834-17471)/(506816-157248)=60%。只有60%但是还是触发fullgc了。By default CMS GC uses set of heuristic rules to trigger garbage collection. This makes GC less predictable and usually tends to delay collection until old generation is almost occupied.
+
+2021-01-19T22:04:42.487+0500: 0.372: [GC (CMS Initial Mark) [1 CMS-initial-mark: 210362K(349568K)] 228033K(506816K), 0.0004270 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+
+    STW，但是时间很短。mark all the objects in the Old Generation that are either direct GC roots or are referenced from some live object in the Young Generation.
+
+2021-01-19T22:04:42.488+0500: 0.372: [CMS-concurrent-mark-start]
+2021-01-19T22:04:42.490+0500: 0.374: [CMS-concurrent-mark: 0.002/0.002 secs] [Times: user=0.00 sys=0.01, real=0.01 secs]
+
+    Phase 2: Concurrent Mark. 这里的times没啥意义，因为是concurrent的，跟application threads一起运行，只算跟application threads抢占cpu的时间
+
+2021-01-19T22:04:42.490+0500: 0.374: [CMS-concurrent-preclean-start]
+2021-01-19T22:04:42.491+0500: 0.375: [CMS-concurrent-preclean: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+
+    像上面那样，current obj对其他对象的引用在Concurrent Mark的时候被改了，GC做Concurrent Mark的时候就会记下哪些card在期间发生了更改。这些card来到现在这个Concurrent Preclean阶段就会被追溯回来，把丢掉的reference的对象也加进来
+
+2021-01-19T22:04:42.491+0500: 0.375: [CMS-concurrent-abortable-preclean-start]
+2021-01-19T22:04:42.504+0500: 0.388: [GC (Allocation Failure) 2021-01-19T22:04:42.504+0500: 0.388: [ParNew: 157247K->17471K(157248K), 0.0231637 secs] 367610K->265677K(506816K), 0.0232307 secs] [Times: user=0.27 sys=0.01, real=0.02 secs]
+2021-01-19T22:04:42.543+0500: 0.427: [GC (Allocation Failure) 2021-01-19T22:04:42.543+0500: 0.427: [ParNew: 157247K->17468K(157248K), 0.0221052 secs] 405453K->303971K(506816K), 0.0222439 secs] [Times: user=0.26 sys=0.02, real=0.02 secs]
+2021-01-19T22:04:42.580+0500: 0.464: [GC (Allocation Failure) 2021-01-19T22:04:42.580+0500: 0.464: [ParNew: 157172K->17471K(157248K), 0.0255871 secs] 443675K->345838K(506816K), 0.0257398 secs] [Times: user=0.30 sys=0.02, real=0.02 secs]
+2021-01-19T22:04:42.606+0500: 0.490: [CMS-concurrent-abortable-preclean: 0.003/0.116 secs] [Times: user=0.89 sys=0.05, real=0.11 secs]
+
+    这个阶段一直在重复前面concurrent preclean阶段的工作，但是是abortable的。什么时候abort呢？until one of the abortion conditions (such as the number of iterations, amount of useful work done, elapsed wall clock time, etc) is met
+    另外这里可以看到在fullgc期间是可以做ygc的
+
+2021-01-19T22:04:42.606+0500: 0.490: [GC (CMS Final Remark) [YG occupancy: 24148 K (157248 K)]2021-01-19T22:04:42.606+0500: 0.490: [Rescan (parallel) , 0.0004471 secs]2021-01-19T22:04:42.607+0500: 0.491: [weak refs processing, 0.0000487 secs]2021-01-19T22:04:42.607+0500: 0.491: [class unloading, 0.0002591 secs]2021-01-19T22:04:42.607+0500: 0.491: [scrub symbol table, 0.0002531 secs]2021-01-19T22:04:42.607+0500: 0.491: [scrub string table, 0.0002464 secs][1 CMS-remark: 328366K(349568K)] 352514K(506816K), 0.0013616 secs] [Times: user=0.01 sys=0.00, real=0.00 secs]
+
+    第二次STW。要在最后STW做最后的努力把前面所有没mark到的object mark上
+
+2021-01-19T22:04:42.608+0500: 0.492: [CMS-concurrent-sweep-start]
+2021-01-19T22:04:42.608+0500: 0.493: [CMS-concurrent-sweep: 0.001/0.001 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.608+0500: 0.493: [CMS-concurrent-reset-start]
+2021-01-19T22:04:42.609+0500: 0.493: [CMS-concurrent-reset: 0.001/0.001 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+
+    以上为一次fullgc
+
+2021-01-19T22:04:42.622+0500: 0.506: [GC (Allocation Failure) 2021-01-19T22:04:42.622+0500: 0.506: [ParNew: 157247K->17470K(157248K), 0.0112944 secs] 441523K->350976K(506816K), 0.0113563 secs] [Times: user=0.14 sys=0.00, real=0.01 secs]
+2021-01-19T22:04:42.633+0500: 0.517: [GC (CMS Initial Mark) [1 CMS-initial-mark: 333505K(349568K)] 351652K(506816K), 0.0002201 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.633+0500: 0.517: [CMS-concurrent-mark-start]
+2021-01-19T22:04:42.634+0500: 0.518: [CMS-concurrent-mark: 0.001/0.001 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.634+0500: 0.518: [CMS-concurrent-preclean-start]
+2021-01-19T22:04:42.634+0500: 0.519: [CMS-concurrent-preclean: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.634+0500: 0.519: [CMS-concurrent-abortable-preclean-start]
+2021-01-19T22:04:42.634+0500: 0.519: [CMS-concurrent-abortable-preclean: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.635+0500: 0.519: [GC (CMS Final Remark) [YG occupancy: 28690 K (157248 K)]2021-01-19T22:04:42.635+0500: 0.519: [Rescan (parallel) , 0.0002614 secs]2021-01-19T22:04:42.635+0500: 0.519: [weak refs processing, 0.0000139 secs]2021-01-19T22:04:42.635+0500: 0.519: [class unloading, 0.0001870 secs]2021-01-19T22:04:42.635+0500: 0.519: [scrub symbol table, 0.0002810 secs]2021-01-19T22:04:42.635+0500: 0.519: [scrub string table, 0.0001522 secs][1 CMS-remark: 333505K(349568K)] 362196K(506816K), 0.0009638 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.636+0500: 0.520: [CMS-concurrent-sweep-start]
+2021-01-19T22:04:42.636+0500: 0.520: [CMS-concurrent-sweep: 0.001/0.001 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.636+0500: 0.520: [CMS-concurrent-reset-start]
+2021-01-19T22:04:42.636+0500: 0.521: [CMS-concurrent-reset: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.649+0500: 0.534: [GC (Allocation Failure) 2021-01-19T22:04:42.650+0500: 0.534: [ParNew: 157246K->17470K(157248K), 0.0081710 secs] 397013K->304910K(506816K), 0.0082500 secs] [Times: user=0.10 sys=0.00, real=0.01 secs]
+
+    这次ygc过后，老年代使用率为(304910-17470)/(506816-157248)=82%。同样触发fullgc
+
+2021-01-19T22:04:42.658+0500: 0.542: [GC (CMS Initial Mark) [1 CMS-initial-mark: 287439K(349568K)] 307784K(506816K), 0.0002286 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.658+0500: 0.542: [CMS-concurrent-mark-start]
+2021-01-19T22:04:42.659+0500: 0.543: [CMS-concurrent-mark: 0.001/0.001 secs] [Times: user=0.01 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.659+0500: 0.543: [CMS-concurrent-preclean-start]
+2021-01-19T22:04:42.659+0500: 0.543: [CMS-concurrent-preclean: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.659+0500: 0.543: [CMS-concurrent-abortable-preclean-start]
+2021-01-19T22:04:42.674+0500: 0.558: [GC (Allocation Failure) 2021-01-19T22:04:42.674+0500: 0.558: [ParNew: 157246K->17469K(157248K), 0.0075414 secs] 444686K->346622K(506816K), 0.0076127 secs] [Times: user=0.10 sys=0.00, real=0.01 secs]
+2021-01-19T22:04:42.682+0500: 0.566: [CMS-concurrent-abortable-preclean: 0.001/0.023 secs] [Times: user=0.11 sys=0.00, real=0.03 secs]
+2021-01-19T22:04:42.682+0500: 0.566: [GC (CMS Final Remark) [YG occupancy: 26726 K (157248 K)]2021-01-19T22:04:42.682+0500: 0.566: [Rescan (parallel) , 0.0002697 secs]2021-01-19T22:04:42.682+0500: 0.567: [weak refs processing, 0.0000127 secs]2021-01-19T22:04:42.682+0500: 0.567: [class unloading, 0.0002006 secs]2021-01-19T22:04:42.683+0500: 0.567: [scrub symbol table, 0.0002667 secs]2021-01-19T22:04:42.683+0500: 0.567: [scrub string table, 0.0001529 secs][1 CMS-remark: 329152K(349568K)] 355879K(506816K), 0.0009574 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.683+0500: 0.567: [CMS-concurrent-sweep-start]
+2021-01-19T22:04:42.684+0500: 0.568: [CMS-concurrent-sweep: 0.001/0.001 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.684+0500: 0.568: [CMS-concurrent-reset-start]
+2021-01-19T22:04:42.684+0500: 0.568: [CMS-concurrent-reset: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.697+0500: 0.581: [GC (Allocation Failure) 2021-01-19T22:04:42.697+0500: 0.581: [ParNew (promotion failed): 157031K->157032K(157248K), 0.0137018 secs]2021-01-19T22:04:42.711+0500: 0.595: [CMS: 345327K->300113K(349568K), 0.0419102 secs] 453276K->300113K(506816K), [Metaspace: 3195K->3195K(1056768K)], 0.0557360 secs] [Times: user=0.20 sys=0.01, real=0.06 secs]
+
+    这里看到ParNew (promotion failed)，说明年轻代object没法成功promote到老年代，因为老年代使用率已经达到了345327/349568=98%。查找了一下发现这是CMS的fragmentation issue导致的。这里虽然同样是GC (Allocation Failure)，但实际上是一次fullgc，而且用的算法不是CMS，而是一个serial compacting collector来做compacting。这里可以看到，之前因为fragmentation损失了345327K-300113K=45214k的空间。ParNew (promotion failed)会造成严重的性能问题
+
+    https://stackoverflow.com/questions/27599934/avoiding-promotion-failed-in-java-cms-gc/33120472
+    https://access.redhat.com/solutions/42402
+    The CMS young generation collector keeps track of recent promotions to the old generation and uses the data to calculate the amount of free space needed for promotions (it doesn't just use the new generation size).The CMS young generation collector keeps track of recent promotions to the old generation and uses the data to calculate the amount of free space needed for promotions (it doesn't just use the new generation size).
+    The problem is that the CMS collector is not a compacting collector. It discovers garbage and adds the memory to free lists of available space that it maintains based on popular object sizes. If many objects of varying sizes are allocated, the free lists will be split. This can lead to many free lists whose total size is large enough to satisfy the calculated free space needed for promotions; however, there is not enough contiguous space for one of the objects being promoted.
+    The CMS young generation collector has the ability to back out of a young collection and do a full collection with a serial compacting collector. This is a promotion failure and is an expensive operation that typically results in large pause times.
+    A programming pattern that can lead to fragmentation is initializing many arrays at a small size and then later resizing them much larger. This will cause the JVM to split Free Lists into small Blocks/Chunks, resulting in no Chunk large enough to allocate the array when it's resized larger. To avoid this, initialize arrays at the expected required size.The problem is that the CMS collector is not a compacting collector. It discovers garbage and adds the memory to free lists of available space that it maintains based on popular object sizes. If many objects of varying sizes are allocated, the free lists will be split. This can lead to many free lists whose total size is large enough to satisfy the calculated free space needed for promotions; however, there is not enough contiguous space for one of the objects being promoted.
+    The CMS young generation collector has the ability to back out of a young collection and do a full collection with a serial compacting collector. This is a promotion failure and is an expensive operation that typically results in large pause times.
+    A programming pattern that can lead to fragmentation is initializing many arrays at a small size and then later resizing them much larger. This will cause the JVM to split Free Lists into small Blocks/Chunks, resulting in no Chunk large enough to allocate the array when it's resized larger. To avoid this, initialize arrays at the expected required size.
+
+
+2021-01-19T22:04:42.753+0500: 0.637: [GC (CMS Initial Mark) [1 CMS-initial-mark: 300113K(349568K)] 300401K(506816K), 0.0002566 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.753+0500: 0.637: [CMS-concurrent-mark-start]
+2021-01-19T22:04:42.754+0500: 0.638: [CMS-concurrent-mark: 0.001/0.001 secs] [Times: user=0.01 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.754+0500: 0.638: [CMS-concurrent-preclean-start]
+2021-01-19T22:04:42.755+0500: 0.639: [CMS-concurrent-preclean: 0.001/0.001 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.755+0500: 0.639: [CMS-concurrent-abortable-preclean-start]
+2021-01-19T22:04:42.773+0500: 0.657: [GC (Allocation Failure) 2021-01-19T22:04:42.773+0500: 0.657: [ParNew: 139776K->139776K(157248K), 0.0000217 secs]
+2021-01-19T22:04:42.773+0500: 0.657: [CMS(concurrent mode failure): 300113K->309220K(349568K), 0.0378028 secs] 439889K->309220K(506816K), [Metaspace: 3195K->3195K(1056768K)], 0.0379251 secs] [Times: user=0.04 sys=0.00, real=0.04 secs]
+2021-01-19T22:04:42.773+0500: 0.658: [CMS-concurrent-abortable-preclean: 0.001/0.019 secs] [Times: user=0.02 sys=0.00, real=0.02 secs]
+
+    上面几条log一开始是乱序的，整理完如上。
+
+    https://stackoverflow.com/questions/3706570/why-cmsconcurrent-mode-failure-happened-here
+    The message "concurrent mode failure" signifies that the concurrent collection of the tenured generation did not finish before the tenured generation became full. In other words, the new generation is filling up too fast, it is overflowing to tenured generation but the CMS could not clear out the tenured generation in the background.
+
+2021-01-19T22:04:42.830+0500: 0.714: [GC (Allocation Failure) 2021-01-19T22:04:42.830+0500: 0.714: [ParNew: 139693K->17470K(157248K), 0.0061205 secs] 448914K->357178K(506816K), 0.0061914 secs] [Times: user=0.08 sys=0.00, real=0.00 secs]
+
+    此时老年代使用率：(357178-17470)/(506816-157248)=97%
+
+2021-01-19T22:04:42.836+0500: 0.720: [GC (CMS Initial Mark) [1 CMS-initial-mark: 339708K(349568K)] 360884K(506816K), 0.0002344 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.836+0500: 0.720: [CMS-concurrent-mark-start]
+2021-01-19T22:04:42.837+0500: 0.721: [CMS-concurrent-mark: 0.001/0.001 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.837+0500: 0.721: [CMS-concurrent-preclean-start]
+2021-01-19T22:04:42.838+0500: 0.722: [CMS-concurrent-preclean: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.838+0500: 0.722: [CMS-concurrent-abortable-preclean-start]
+2021-01-19T22:04:42.838+0500: 0.722: [CMS-concurrent-abortable-preclean: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.838+0500: 0.722: [GC (CMS Final Remark) [YG occupancy: 31279 K (157248 K)]2021-01-19T22:04:42.838+0500: 0.722: [Rescan (parallel) , 0.0002637 secs]2021-01-19T22:04:42.838+0500: 0.722: [weak refs processing, 0.0000113 secs]2021-01-19T22:04:42.838+0500: 0.722: [class unloading, 0.0001978 secs]2021-01-19T22:04:42.838+0500: 0.722: [scrub symbol table, 0.0002846 secs]2021-01-19T22:04:42.838+0500: 0.723: [scrub string table, 0.0001564 secs][1 CMS-remark: 339708K(349568K)] 370987K(506816K), 0.0009743 secs] [Times: user=0.01 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.839+0500: 0.723: [CMS-concurrent-sweep-start]
+2021-01-19T22:04:42.839+0500: 0.723: [CMS-concurrent-sweep: 0.001/0.001 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.839+0500: 0.723: [CMS-concurrent-reset-start]
+2021-01-19T22:04:42.839+0500: 0.724: [CMS-concurrent-reset: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.855+0500: 0.739: [GC (Allocation Failure) 2021-01-19T22:04:42.855+0500: 0.739: [ParNew: 157246K->17471K(157248K), 0.0064535 secs] 451990K->352316K(506816K), 0.0065264 secs] [Times: user=0.08 sys=0.00, real=0.01 secs]
+
+    老年代使用率(352316-17471)/(506816-157248)=95%
+
+2021-01-19T22:04:42.861+0500: 0.745: [GC (CMS Initial Mark) [1 CMS-initial-mark: 334844K(349568K)] 352388K(506816K), 0.0002122 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.862+0500: 0.746: [CMS-concurrent-mark-start]
+2021-01-19T22:04:42.862+0500: 0.747: [CMS-concurrent-mark: 0.001/0.001 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.862+0500: 0.747: [CMS-concurrent-preclean-start]
+2021-01-19T22:04:42.863+0500: 0.747: [CMS-concurrent-preclean: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.863+0500: 0.747: [CMS-concurrent-abortable-preclean-start]
+2021-01-19T22:04:42.863+0500: 0.747: [CMS-concurrent-abortable-preclean: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.863+0500: 0.747: [GC (CMS Final Remark) [YG occupancy: 31599 K (157248 K)]2021-01-19T22:04:42.863+0500: 0.747: [Rescan (parallel) , 0.0003322 secs]2021-01-19T22:04:42.863+0500: 0.747: [weak refs processing, 0.0000136 secs]2021-01-19T22:04:42.863+0500: 0.747: [class unloading, 0.0001900 secs]2021-01-19T22:04:42.864+0500: 0.748: [scrub symbol table, 0.0002770 secs]2021-01-19T22:04:42.864+0500: 0.748: [scrub string table, 0.0001662 secs][1 CMS-remark: 334844K(349568K)] 366444K(506816K), 0.0010354 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.864+0500: 0.748: [CMS-concurrent-sweep-start]
+2021-01-19T22:04:42.865+0500: 0.749: [CMS-concurrent-sweep: 0.001/0.001 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.865+0500: 0.749: [CMS-concurrent-reset-start]
+2021-01-19T22:04:42.865+0500: 0.749: [CMS-concurrent-reset: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.880+0500: 0.764: [GC (Allocation Failure) 2021-01-19T22:04:42.880+0500: 0.764: [ParNew: 157247K->17471K(157248K), 0.0075246 secs] 456815K->362774K(506816K), 0.0075979 secs] [Times: user=0.10 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.888+0500: 0.772: [GC (CMS Initial Mark) [1 CMS-initial-mark: 345302K(349568K)] 365885K(506816K), 0.0002529 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.888+0500: 0.772: [CMS-concurrent-mark-start]
+2021-01-19T22:04:42.889+0500: 0.773: [CMS-concurrent-mark: 0.001/0.001 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.889+0500: 0.773: [CMS-concurrent-preclean-start]
+2021-01-19T22:04:42.889+0500: 0.773: [CMS-concurrent-preclean: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.889+0500: 0.773: [CMS-concurrent-abortable-preclean-start]
+2021-01-19T22:04:42.889+0500: 0.773: [CMS-concurrent-abortable-preclean: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.889+0500: 0.773: [GC (CMS Final Remark) [YG occupancy: 27046 K (157248 K)]2021-01-19T22:04:42.889+0500: 0.773: [Rescan (parallel) , 0.0003560 secs]2021-01-19T22:04:42.890+0500: 0.774: [weak refs processing, 0.0000131 secs]2021-01-19T22:04:42.890+0500: 0.774: [class unloading, 0.0001863 secs]2021-01-19T22:04:42.890+0500: 0.774: [scrub symbol table, 0.0002734 secs]2021-01-19T22:04:42.890+0500: 0.774: [scrub string table, 0.0001615 secs][1 CMS-remark: 345302K(349568K)] 372349K(506816K), 0.0010454 secs] [Times: user=0.00 sys=0.00, real=0.01 secs]
+2021-01-19T22:04:42.890+0500: 0.775: [CMS-concurrent-sweep-start]
+2021-01-19T22:04:42.891+0500: 0.775: [CMS-concurrent-sweep: 0.001/0.001 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.891+0500: 0.775: [CMS-concurrent-reset-start]
+2021-01-19T22:04:42.891+0500: 0.775: [CMS-concurrent-reset: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.905+0500: 0.789: [GC (Allocation Failure) 2021-01-19T22:04:42.905+0500: 0.789: [ParNew: 157247K->157247K(157248K), 0.0000180 secs]2021-01-19T22:04:42.905+0500: 0.789: [CMS: 312647K->333331K(349568K), 0.0387391 secs] 469895K->333331K(506816K), [Metaspace: 3195K->3195K(1056768K)], 0.0388361 secs] [Times: user=0.04 sys=0.00, real=0.04 secs]
+2021-01-19T22:04:42.944+0500: 0.828: [GC (CMS Initial Mark) [1 CMS-initial-mark: 333331K(349568K)] 333428K(506816K), 0.0002159 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.944+0500: 0.829: [CMS-concurrent-mark-start]
+2021-01-19T22:04:42.945+0500: 0.829: [CMS-concurrent-mark: 0.001/0.001 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.945+0500: 0.829: [CMS-concurrent-preclean-start]
+2021-01-19T22:04:42.946+0500: 0.830: [CMS-concurrent-preclean: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:42.946+0500: 0.830: [CMS-concurrent-abortable-preclean-start]
+2021-01-19T22:04:42.961+0500: 0.845: [GC (Allocation Failure) 2021-01-19T22:04:42.961+0500: 0.845: [ParNew: 139776K->139776K(157248K), 0.0000192 secs]2021-01-19T22:04:42.961+0500: 0.845: [CMS2021-01-19T22:04:42.961+0500: 0.845: [CMS-concurrent-abortable-preclean: 0.000/0.016 secs] [Times: user=0.02 sys=0.00, real=0.02 secs]
+ (concurrent mode failure): 333331K->340327K(349568K), 0.0436394 secs] 473107K->340327K(506816K), [Metaspace: 3195K->3195K(1056768K)], 0.0437462 secs] [Times: user=0.04 sys=0.00, real=0.04 secs]
+2021-01-19T22:04:43.022+0500: 0.906: [GC (Allocation Failure) 2021-01-19T22:04:43.022+0500: 0.906: [ParNew: 139776K->139776K(157248K), 0.0000224 secs]2021-01-19T22:04:43.022+0500: 0.906: [CMS: 340327K->343458K(349568K), 0.0468138 secs] 480103K->343458K(506816K), [Metaspace: 3195K->3195K(1056768K)], 0.0469324 secs] [Times: user=0.04 sys=0.00, real=0.04 secs]
+2021-01-19T22:04:43.069+0500: 0.953: [GC (CMS Initial Mark) [1 CMS-initial-mark: 343458K(349568K)] 344155K(506816K), 0.0002512 secs] [Times: user=0.00 sys=0.00, real=0.01 secs]
+2021-01-19T22:04:43.070+0500: 0.954: [CMS-concurrent-mark-start]
+2021-01-19T22:04:43.070+0500: 0.954: [CMS-concurrent-mark: 0.001/0.001 secs] [Times: user=0.01 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:43.070+0500: 0.955: [CMS-concurrent-preclean-start]
+2021-01-19T22:04:43.071+0500: 0.955: [CMS-concurrent-preclean: 0.001/0.001 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:43.071+0500: 0.955: [CMS-concurrent-abortable-preclean-start]
+2021-01-19T22:04:43.071+0500: 0.955: [CMS-concurrent-abortable-preclean: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:43.071+0500: 0.955: [GC (CMS Final Remark) [YG occupancy: 13693 K (157248 K)]2021-01-19T22:04:43.071+0500: 0.955: [Rescan (parallel) , 0.0004196 secs]2021-01-19T22:04:43.071+0500: 0.956: [weak refs processing, 0.0000142 secs]2021-01-19T22:04:43.072+0500: 0.956: [class unloading, 0.0002264 secs]2021-01-19T22:04:43.072+0500: 0.956: [scrub symbol table, 0.0003309 secs]2021-01-19T22:04:43.072+0500: 0.956: [scrub string table, 0.0001926 secs][1 CMS-remark: 343458K(349568K)] 357152K(506816K), 0.0012510 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:43.072+0500: 0.956: [CMS-concurrent-sweep-start]
+2021-01-19T22:04:43.073+0500: 0.957: [CMS-concurrent-sweep: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:43.073+0500: 0.957: [CMS-concurrent-reset-start]
+2021-01-19T22:04:43.073+0500: 0.957: [CMS-concurrent-reset: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:43.089+0500: 0.974: [GC (Allocation Failure) 2021-01-19T22:04:43.089+0500: 0.974: [ParNew: 139776K->139776K(157248K), 0.0000213 secs]2021-01-19T22:04:43.089+0500: 0.974: [CMS: 342315K->343539K(349568K), 0.0450117 secs] 482091K->343539K(506816K), [Metaspace: 3195K->3195K(1056768K)], 0.0451273 secs] [Times: user=0.05 sys=0.00, real=0.05 secs]
+2021-01-19T22:04:43.135+0500: 1.019: [GC (CMS Initial Mark) [1 CMS-initial-mark: 343539K(349568K)] 343718K(506816K), 0.0003558 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:43.135+0500: 1.019: [CMS-concurrent-mark-start]
+2021-01-19T22:04:43.136+0500: 1.020: [CMS-concurrent-mark: 0.001/0.001 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:43.136+0500: 1.020: [CMS-concurrent-preclean-start]
+2021-01-19T22:04:43.137+0500: 1.021: [CMS-concurrent-preclean: 0.001/0.001 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:43.137+0500: 1.021: [CMS-concurrent-abortable-preclean-start]
+2021-01-19T22:04:43.137+0500: 1.021: [CMS-concurrent-abortable-preclean: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:43.137+0500: 1.021: [GC (CMS Final Remark) [YG occupancy: 12449 K (157248 K)]2021-01-19T22:04:43.137+0500: 1.021: [Rescan (parallel) , 0.0002532 secs]2021-01-19T22:04:43.137+0500: 1.021: [weak refs processing, 0.0000187 secs]2021-01-19T22:04:43.137+0500: 1.021: [class unloading, 0.0002391 secs]2021-01-19T22:04:43.137+0500: 1.021: [scrub symbol table, 0.0003828 secs]2021-01-19T22:04:43.138+0500: 1.022: [scrub string table, 0.0001893 secs][1 CMS-remark: 343539K(349568K)] 355989K(506816K), 0.0012088 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:43.138+0500: 1.022: [CMS-concurrent-sweep-start]
+2021-01-19T22:04:43.139+0500: 1.023: [CMS-concurrent-sweep: 0.001/0.001 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:43.139+0500: 1.023: [CMS-concurrent-reset-start]
+2021-01-19T22:04:43.139+0500: 1.023: [CMS-concurrent-reset: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:43.155+0500: 1.039: [GC (Allocation Failure) 2021-01-19T22:04:43.155+0500: 1.039: [ParNew: 139776K->139776K(157248K), 0.0000252 secs]2021-01-19T22:04:43.155+0500: 1.039: [CMS: 342870K->349429K(349568K), 0.0445209 secs] 482646K->350300K(506816K), [Metaspace: 3195K->3195K(1056768K)], 0.0469057 secs] [Times: user=0.05 sys=0.00, real=0.05 secs]
+2021-01-19T22:04:43.202+0500: 1.086: [GC (CMS Initial Mark) [1 CMS-initial-mark: 349429K(349568K)] 353225K(506816K), 0.0010110 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+2021-01-19T22:04:43.203+0500: 1.087: [CMS-concurrent-mark-start]
+Heap
+ par new generation   total 157248K, used 6591K [0x00000007a0000000, 0x00000007aaaa0000, 0x00000007aaaa0000)
+  eden space 139776K,   4% used [0x00000007a0000000, 0x00000007a066ff20, 0x00000007a8880000)
+  from space 17472K,   0% used [0x00000007a9990000, 0x00000007a9990000, 0x00000007aaaa0000)
+  to   space 17472K,   0% used [0x00000007a8880000, 0x00000007a8880000, 0x00000007a9990000)
+ concurrent mark-sweep generation total 349568K, used 349429K [0x00000007aaaa0000, 0x00000007c0000000, 0x00000007c0000000)
+ Metaspace       used 3201K, capacity 4500K, committed 4864K, reserved 1056768K
+  class space    used 343K, capacity 388K, committed 512K, reserved 1048576K

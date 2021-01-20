@@ -1,0 +1,40 @@
+-Xloggc:/tmp/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xms512m -Xmx512m -XX:+UseSerialGC
+OpenJDK 64-Bit Server VM (25.232-b09) for bsd-amd64 JRE (1.8.0_232-b09), built on Oct 19 2019 07:00:21 by "jenkins" with gcc 4.2.1 (Based on Apple Inc. build 5658) (LLVM build 2336.11.00)
+        Memory: 4k page, physical 67108864k(1450304k free)
+
+        /proc/meminfo:
+
+        CommandLine flags: -XX:InitialHeapSize=536870912 -XX:MaxHeapSize=536870912 -XX:+PrintGC -XX:+PrintGCDateStamps -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+UseCompressedClassPointers -XX:+UseCompressedOops -XX:+UseSerialGC
+        2021-01-19T12:55:51.262+0500: 0.161: [GC (Allocation Failure) 2021-01-19T12:55:51.262+0500: 0.161: [DefNew: 139776K->17472K(157248K), 0.0286099 secs] 139776K->49001K(506816K), 0.0287284 secs] [Times: user=0.02 sys=0.01, real=0.03 secs]
+        可以看到，每次YGC的残余量都是差不多的，而老年代在稳定增长49001-17472=31529K
+        2021-01-19T12:55:51.313+0500: 0.212: [GC (Allocation Failure) 2021-01-19T12:55:51.313+0500: 0.212: [DefNew: 157248K->17468K(157248K), 0.0357235 secs] 188777K->97413K(506816K), 0.0357984 secs] [Times: user=0.02 sys=0.02, real=0.03 secs]
+        老年代：97413-17468=79945K
+        2021-01-19T12:55:51.365+0500: 0.264: [GC (Allocation Failure) 2021-01-19T12:55:51.365+0500: 0.264: [DefNew: 157244K->17471K(157248K), 0.0250729 secs] 237189K->140355K(506816K), 0.0251437 secs] [Times: user=0.01 sys=0.01, real=0.03 secs]
+        老年代：140355-17471=122884
+        2021-01-19T12:55:51.407+0500: 0.306: [GC (Allocation Failure) 2021-01-19T12:55:51.407+0500: 0.306: [DefNew: 157247K->17471K(157248K), 0.0267837 secs] 280131K->183646K(506816K), 0.0268785 secs] [Times: user=0.01 sys=0.01, real=0.03 secs]
+        2021-01-19T12:55:51.450+0500: 0.349: [GC (Allocation Failure) 2021-01-19T12:55:51.450+0500: 0.349: [DefNew: 157247K->17471K(157248K), 0.0260042 secs] 323422K->228219K(506816K), 0.0260783 secs] [Times: user=0.01 sys=0.01, real=0.02 secs]
+        2021-01-19T12:55:51.491+0500: 0.391: [GC (Allocation Failure) 2021-01-19T12:55:51.491+0500: 0.391: [DefNew: 157080K->17471K(157248K), 0.0273639 secs] 367828K->275426K(506816K), 0.0274322 secs] [Times: user=0.01 sys=0.02, real=0.02 secs]
+        2021-01-19T12:55:51.535+0500: 0.434: [GC (Allocation Failure) 2021-01-19T12:55:51.535+0500: 0.434: [DefNew: 157247K->17471K(157248K), 0.0301968 secs] 415202K->327589K(506816K), 0.0302655 secs] [Times: user=0.02 sys=0.01, real=0.03 secs]
+        老年代：327589-17471=310118k
+        2021-01-19T12:55:51.582+0500: 0.481: [GC (Allocation Failure) 2021-01-19T12:55:51.582+0500: 0.481: [DefNew: 157226K->157226K(157248K), 0.0000159 secs] 2021-01-19T12:55:51.582+0500: 0.481: [Tenured: 310118K->268959K(349568K), 0.0360743 secs] 467344K->268959K(506816K), [Metaspace: 3195K->3195K(1056768K)], 0.0361811 secs] [Times: user=0.04 sys=0.00, real=0.03 secs]
+        注意fullgc记录是一行过的，没有分成先ygc再fullgc。年轻代满了，全部强行移到老年代。年轻代移到老年代之后，老年代gc前，可以看到上一次gc时候的老年代310118k加上这次gc前的年轻代157226K，310118+157226=467344K，刚好等于这里fullgc前老年代显示的467344K。ygc显示是157226K->157226K，但其实已经清零了，这里纯显示错误，是JVM的一个bug。fullgc后堆内存使用量下降了，老年代使用率77%，堆内存使用率64%，fullgc耗时36ms
+        2021-01-19T12:55:51.638+0500: 0.537: [GC (Allocation Failure) 2021-01-19T12:55:51.638+0500: 0.537: [DefNew: 139776K->17471K(157248K), 0.0057778 secs] 408735K->312991K(506816K), 0.0058475 secs] [Times: user=0.00 sys=0.00, real=0.01 secs]
+        2021-01-19T12:55:51.661+0500: 0.560: [GC (Allocation Failure) 2021-01-19T12:55:51.661+0500: 0.560: [DefNew: 157247K->17471K(157248K), 0.0191819 secs] 452767K->354950K(506816K), 0.0192579 secs] [Times: user=0.01 sys=0.01, real=0.02 secs]
+        2021-01-19T12:55:51.697+0500: 0.596: [GC (Allocation Failure) 2021-01-19T12:55:51.697+0500: 0.596: [DefNew: 157247K->157247K(157248K), 0.0000153 secs]2021-01-19T12:55:51.697+0500: 0.596: [Tenured: 337478K->300935K(349568K), 0.0351636 secs] 494726K->300935K(506816K), [Metaspace: 3195K->3195K(1056768K)], 0.0352662 secs] [Times: user=0.04 sys=0.00, real=0.04 secs]
+        2021-01-19T12:55:51.748+0500: 0.647: [GC (Allocation Failure) 2021-01-19T12:55:51.748+0500: 0.647: [DefNew: 139776K->17471K(157248K), 0.0055955 secs] 440711K->344228K(506816K), 0.0056695 secs] [Times: user=0.01 sys=0.00, real=0.01 secs]
+        2021-01-19T12:55:51.768+0500: 0.667: [GC (Allocation Failure) 2021-01-19T12:55:51.768+0500: 0.668: [DefNew: 157116K->157116K(157248K), 0.0000186 secs]2021-01-19T12:55:51.768+0500: 0.668: [Tenured: 326756K->326286K(349568K), 0.0399584 secs] 483872K->326286K(506816K), [Metaspace: 3195K->3195K(1056768K)], 0.0400746 secs] [Times: user=0.04 sys=0.00, real=0.04 secs]
+        2021-01-19T12:55:51.826+0500: 0.725: [GC (Allocation Failure) 2021-01-19T12:55:51.826+0500: 0.725: [DefNew: 139776K->139776K(157248K), 0.0000155 secs]2021-01-19T12:55:51.826+0500: 0.726: [Tenured: 326286K->318403K(349568K), 0.0408963 secs] 466062K->318403K(506816K), [Metaspace: 3195K->3195K(1056768K)], 0.0410282 secs] [Times: user=0.04 sys=0.00, real=0.04 secs]
+        2021-01-19T12:55:51.886+0500: 0.785: [GC (Allocation Failure) 2021-01-19T12:55:51.886+0500: 0.785: [DefNew: 139776K->139776K(157248K), 0.0000185 secs]2021-01-19T12:55:51.886+0500: 0.785: [Tenured: 318403K->339602K(349568K), 0.0309692 secs] 458179K->339602K(506816K), [Metaspace: 3195K->3195K(1056768K)], 0.0310732 secs] [Times: user=0.03 sys=0.00, real=0.03 secs]
+        2021-01-19T12:55:51.937+0500: 0.836: [GC (Allocation Failure) 2021-01-19T12:55:51.937+0500: 0.836: [DefNew: 139384K->139384K(157248K), 0.0000170 secs]2021-01-19T12:55:51.937+0500: 0.836: [Tenured: 339602K->346129K(349568K), 0.0401173 secs] 478987K->346129K(506816K), [Metaspace: 3195K->3195K(1056768K)], 0.0402169 secs] [Times: user=0.04 sys=0.00, real=0.04 secs]
+        2021-01-19T12:55:51.995+0500: 0.894: [GC (Allocation Failure) 2021-01-19T12:55:51.995+0500: 0.894: [DefNew: 139776K->139776K(157248K), 0.0000160 secs]2021-01-19T12:55:51.995+0500: 0.894: [Tenured: 346129K->349526K(349568K), 0.0442959 secs] 485905K->351495K(506816K), [Metaspace: 3195K->3195K(1056768K)], 0.0443959 secs] [Times: user=0.05 sys=0.00, real=0.05 secs]
+        2021-01-19T12:55:52.063+0500: 0.962: [Full GC (Allocation Failure) 2021-01-19T12:55:52.063+0500: 0.962: [Tenured: 349526K->336985K(349568K), 0.0501278 secs] 506713K->336985K(506816K), [Metaspace: 3195K->3195K(1056768K)], 0.0502119 secs] [Times: user=0.05 sys=0.00, real=0.05 secs]
+        2021-01-19T12:55:52.134+0500: 1.033: [GC (Allocation Failure) 2021-01-19T12:55:52.134+0500: 1.033: [DefNew: 139776K->139776K(157248K), 0.0000267 secs]2021-01-19T12:55:52.134+0500: 1.033: [Tenured: 336985K->349494K(349568K), 0.0274900 secs] 476761K->359161K(506816K), [Metaspace: 3195K->3195K(1056768K)], 0.0276932 secs] [Times: user=0.03 sys=0.01, real=0.03 secs]
+        Heap
+        def new generation   total 157248K, used 142800K [0x00000007a0000000, 0x00000007aaaa0000, 0x00000007aaaa0000)
+        eden space 139776K, 100% used [0x00000007a0000000, 0x00000007a8880000, 0x00000007a8880000)
+        from space 17472K,  17% used [0x00000007a8880000, 0x00000007a8b743f8, 0x00000007a9990000)
+        to   space 17472K,   0% used [0x00000007a9990000, 0x00000007a9990000, 0x00000007aaaa0000)
+        tenured generation   total 349568K, used 349494K [0x00000007aaaa0000, 0x00000007c0000000, 0x00000007c0000000)
+        the space 349568K,  99% used [0x00000007aaaa0000, 0x00000007bffed910, 0x00000007bffeda00, 0x00000007c0000000)
+        Metaspace       used 3201K, capacity 4500K, committed 4864K, reserved 1056768K
+class space    used 343K, capacity 388K, committed 512K, reserved 1048576K
