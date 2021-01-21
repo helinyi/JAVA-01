@@ -1,8 +1,8 @@
 READ THIS!!!!
 
-1. src/main/java/GCLogAnalysis.java
-2. src/main/java/wrk.md
-3. src/main/java/httpclient.java
+1. GCLogAnalysis/src/main/java/GCLogAnalysis.java
+2. GCLogAnalysis/src/main/java/wrk.md
+3. httpclient/src/main/java/httpclient.java
 
 <hr>
 
